@@ -1,0 +1,10 @@
+builders:
+  remote_config:
+    import: "package:ipr_ff_generator/ipr_ff_generator.dart"
+    builder_factories: ["remoteConfig"]
+    # SharedPartBuilder з іменем 'remote_config' пише проміжний .part,
+    # combining_builder (нижче) зливає всі *.g.part в один config.g.dart.
+    build_extensions: { ".dart": [".remote_config.g.part"] }
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]

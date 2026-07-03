@@ -1,0 +1,6 @@
+name: ipr_ff_generator_annotations
+description: Annotations for ipr_ff_generator.
+version: 0.0.1
+
+environment:
+  sdk: ^3.12.2

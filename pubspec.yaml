@@ -1,0 +1,18 @@
+name: ipr_ff_generator
+description: A starting point for Dart libraries or applications.
+version: 0.0.1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  analyzer: ^13.3.0
+  build: ^4.0.6
+  source_gen: ^4.2.3
+  change_case: ^2.2.0
+  ipr_ff_generator_annotations:
+    path: lib/annotations/
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

@@ -1,0 +1,17 @@
+name: ipr_ff_generator_example
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  ipr_ff_generator_annotations:
+    path: ../lib/annotations/
+
+dev_dependencies:
+  build_runner: 2.15.0
+  build_test: any
+  ipr_ff_generator:
+    path: ../
+
