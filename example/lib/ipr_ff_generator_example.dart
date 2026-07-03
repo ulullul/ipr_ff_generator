@@ -1,6 +1,5 @@
 import 'models.dart';
 import 'package:ipr_ff_generator_annotations/ipr_ff_generator_annotations.dart';
-import 'rc_codec.dart';
 
 part 'ipr_ff_generator_example.g.dart';
 
@@ -13,4 +12,26 @@ enum RemoteValueKey {
   partnerProgram,
   @RemoteValue<ReferralConditions>('referral_conditions')
   referralConditions,
+}
+
+class RemoteConfig implements RemoteConfigSource {
+  @override
+  bool getBool(String key) {
+    print('get bool');
+    return true;
+  }
+
+  @override
+  String getString(String key) {
+    print('getString');
+    return '';
+  }
+
+}
+
+void main() {
+  final rc = RemoteConfig();
+  final service = RemoteConfigService(rc);
+
+  print(service.partnerProgram);
 }
