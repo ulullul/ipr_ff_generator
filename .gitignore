@@ -9,5 +9,5 @@ pubspec.lock
 # FVM Version Cache
 .fvm/
 
-*.DS_Store
+**/.DS_Store
 *.iml
