@@ -1,39 +1,126 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# ipr_ff_generator
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+Кодогенератор для типобезпечного доступу до Firebase Remote Config. Анотуються два
+enumʼи — один на фіча-флаги, другий на моделі – а генератор збирає з них єдиний
+`RemoteConfigService` з типізованими геттерами та набором інтерфейсів для сегрегації
+залежностей.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/tools/pub/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+## Що це робить
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
-
-## Features
-
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+Замість того щоб вручну писати обгортки над `getBool` / `getString` і парсити JSON
+на кожен ключ Remote Config, ти описуєш ключі декларативно — константами enumʼа:
 
 ```dart
-const like = 'sample';
+@featureFlagEnum
+enum FeatureFlag {
+  partnerEnabled,
+  referralEnabled,
+}
+
+@remoteValueEnum
+enum RemoteValueKey {
+  @RemoteValue<PartnerProgram>('partner_program')
+  partnerProgram,
+
+  @RemoteValue<ReferralConditions>('referral_conditions')
+  referralConditions,
+}
 ```
 
-## Additional information
+## Рантайм-контракт
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+> **Це поточна незакрита залежність.**
+
+Згенерований `RemoteConfigService` посилається на два імені, яких **немає** в самому
+генераторі:
+
+- `RemoteConfigSource` — джерело значень (`bool getBool(String)`, `String getString(String)`);
+- `decodeRc<T>(String raw, T Function(Map<String, dynamic>) fromJson)` — делегат
+  десеріалізації моделей.
+
+Оскільки згенерований файл — це `part` бібліотеки-споживача, він ділить її
+import-скоуп і **не може мати власних імпортів**. Тому обидва імені мусять бути видимі
+у файлі, де оголошені анотовані enumʼи.
+
+## Швидкий старт
+
+### 1. Залежності
+
+```yaml
+# example/pubspec.yaml
+dependencies:
+  ipr_ff_generator_annotations:
+    path: ../lib/annotations   # або з pub, якщо опублікуєш
+
+dev_dependencies:
+  build_runner: ^2.4.13
+  ipr_ff_generator:
+    path: ../
+```
+
+### 2. Моделі з `fromJson`
+
+```dart
+// example/lib/models.dart
+class PartnerProgram {
+  PartnerProgram({required this.id, required this.name});
+
+  factory PartnerProgram.fromJson(Map<String, dynamic> json) =>
+      PartnerProgram(id: json['id'] as int, name: json['name'] as String);
+
+  final int id;
+  final String name;
+}
+```
+
+### 3. Анотовані enumʼи + `part`
+
+```dart
+// example/lib/config.dart
+import 'package:ipr_ff_generator_annotations/ipr_ff_generator_annotations.dart';
+
+import 'models.dart';
+
+part 'config.g.dart';
+
+@featureFlagEnum
+enum FeatureFlag {
+  partnerEnabled,
+  referralEnabled,
+}
+
+@remoteValueEnum
+enum RemoteValueKey {
+  @RemoteValue<PartnerProgram>('partner_program')
+  partnerProgram,
+
+  @RemoteValue<ReferralConditions>('referral_conditions')
+  referralConditions,
+}
+```
+
+### 4. Генерація
+
+```bash
+cd example
+dart pub get
+dart run build_runner build --delete-conflicting-outputs
+```
+
+
+### 5. Використання
+
+```dart
+final rc = RemoteConfigService(myRemoteConfigSource);
+if (rc.partnerEnabled) {
+  final program = rc.partnerProgram; // вже десеріалізована модель
+}
+```
+
+## Довідник анотацій
+
+| Анотація | Ціль | Призначення |
+|---|---|---|
+| `@featureFlagEnum` | enum | Позначає enum як джерело фіча-флагів. Кожна константа → `bool`-геттер. |
+| `@remoteValueEnum` | enum | Позначає enum як джерело моделей. Кожна константа потребує `@RemoteValue`. |
+| `@RemoteValue<T>('key')` | enum-константа | `T` — тип моделі (має `fromJson`), `'key'` — ключ у Remote Config. |
